@@ -91,6 +91,7 @@ void Engine::initialize(CoreParameters coreParameters) {
     if (!params.scriptFile.empty()) {
         paths.setScriptFolder(params.scriptFile.parent_path());
     }
+    loadLibraries(params.libsFolder);
     loadSettings();
 
     auto resdir = paths.getResourcesFolder();
@@ -525,4 +526,32 @@ const CoreParameters& Engine::getCoreParameters() const {
 
 bool Engine::isHeadless() const {
     return params.headless;
+}
+
+void Engine::loadLibraries(const std::filesystem::path& libsPath) {
+    if (!std::filesystem::exists(libsPath)) {
+        return;
+    }
+
+    logger.info() << "[vcinj] injecting native libraries..";
+    
+    for (const auto& entry : std::filesystem::directory_iterator(libsPath)) {
+        if (entry.is_regular_file()) {
+            const auto ext = entry.path().extension().string();
+        #ifdef _WIN32
+            const bool validExt = (ext == ".dll");
+        #else
+            const bool validExt = (ext == ".so");
+        #endif
+            if (validExt) {
+                try {
+                    auto lib = std::make_unique<DynamicLibrary>(entry.path().string());
+                    logger.info() << "[vcinj] Injecting lib: " << entry.path().string();
+                    loadedLibs.push_back(std::move(lib));
+                } catch (const std::exception& e) {
+                    logger.error() << e.what();
+                }
+            }
+        }
+    }
 }

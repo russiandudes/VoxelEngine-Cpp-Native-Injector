@@ -18,6 +18,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <DynamicLibrary.hpp>
 
 class Level;
 class Screen;
@@ -49,6 +50,7 @@ struct CoreParameters {
     bool testMode = false;
     std::filesystem::path resFolder = "res";
     std::filesystem::path userFolder = ".";
+    std::filesystem::path libsFolder = "libs"; 
     std::filesystem::path scriptFile;
 };
 
@@ -184,4 +186,7 @@ public:
     const CoreParameters& getCoreParameters() const;
 
     bool isHeadless() const;
+
+    std::vector<std::unique_ptr<DynamicLibrary>> loadedLibs; 
+    void loadLibraries(const std::filesystem::path& libsPath);
 };
